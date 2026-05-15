@@ -30,7 +30,7 @@ import { UserAddressProvider } from "@/lib/context/address/address.context";
 import { SearchUIProvider } from "@/lib/context/search/search.context";
 import NotificationInitializer from "../NotificationInitialzer";
 import FirebaseForegroundHandler from "@/lib/config/FirebaseForegroundHandler";
-import { useEffect,useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function RootLayout({
   children,
@@ -39,6 +39,16 @@ export default function RootLayout({
 }>) {
   // Apollo
   const client = useSetupApollo();
+
+  // Upstream Enatega's provider/UI tree (metrics-token security feature +
+  // shared UI chunks) is not SSR-safe — it touches localStorage/document
+  // during render. The Orda deployment ships this app via `next start`, so
+  // server-rendering the tree 500s every request. Enatega web is a CSR SPA
+  // anyway: gate the whole subtree behind a client mount so none of it runs
+  // on the server. One contained guard instead of whack-a-mole, keeps the
+  // fork minimally divergent for upstream merges. See orda issue #106.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   // Constants
   const value = {
@@ -118,30 +128,32 @@ export default function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <FontawesomeConfig />
       </head>
-      <body className={"flex flex-col flex-wrap"}>
-        <PrimeReactProvider value={value}>
-          <ApolloProvider client={client}>
-            <ConfigurationProvider>
-              <ToastProvider>
-                <AuthProvider>
-                  <UserProvider>
-                    <LocationProvider>
-                      <UserAddressProvider>
-                        <SearchUIProvider>
-                          <AppLayout>
-                            <NotificationInitializer/>
-                            <FirebaseForegroundHandler/>
-                            {children}
-                            </AppLayout>
-                        </SearchUIProvider>
-                      </UserAddressProvider>
-                    </LocationProvider>
-                  </UserProvider>
-                </AuthProvider>
-              </ToastProvider>
-            </ConfigurationProvider>
-          </ApolloProvider>
-        </PrimeReactProvider>
+      <body className={"flex flex-col flex-wrap"} suppressHydrationWarning>
+        {mounted && (
+          <PrimeReactProvider value={value}>
+            <ApolloProvider client={client}>
+              <ConfigurationProvider>
+                <ToastProvider>
+                  <AuthProvider>
+                    <UserProvider>
+                      <LocationProvider>
+                        <UserAddressProvider>
+                          <SearchUIProvider>
+                            <AppLayout>
+                              <NotificationInitializer/>
+                              <FirebaseForegroundHandler/>
+                              {children}
+                              </AppLayout>
+                          </SearchUIProvider>
+                        </UserAddressProvider>
+                      </LocationProvider>
+                    </UserProvider>
+                  </AuthProvider>
+                </ToastProvider>
+              </ConfigurationProvider>
+            </ApolloProvider>
+          </PrimeReactProvider>
+        )}
       </body>
     </html>
   );
