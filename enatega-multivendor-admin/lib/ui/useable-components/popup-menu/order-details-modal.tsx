@@ -1,8 +1,16 @@
+'use client';
+
 import React from 'react';
 import { Dialog } from 'primereact/dialog';
 import { IExtendedOrder, Items } from '@/lib/utils/interfaces';
 import './order-detail-modal.css';
 import { useConfiguration } from '@/lib/hooks/useConfiguration';
+
+// Orda print-companion bridge. The Kotlin companion app runs on the same
+// counter tablet and hosts an HTTP server on localhost:9100. We POST one
+// PrintJob per copy (KITCHEN + DRIVER) in the exact wire shape the
+// companion's PrintJob.kt expects. See print-companion/README.md.
+const PRINT_COMPANION_URL = 'http://localhost:9100/print';
 
 interface IOrderDetailModalProps {
   visible: boolean;
@@ -16,6 +24,9 @@ const OrderDetailModal: React.FC<IOrderDetailModalProps> = ({
   restaurantData,
 }) => {
   const { CURRENT_SYMBOL } = useConfiguration();
+  const [printStatus, setPrintStatus] = React.useState<string>('');
+  const [printing, setPrinting] = React.useState<boolean>(false);
+
   const calculateSubtotal = (items: Items[]) => {
     let Subtotal = 0;
     for (let i = 0; i < items.length; i++) {
@@ -31,13 +42,93 @@ const OrderDetailModal: React.FC<IOrderDetailModalProps> = ({
     }
     return Subtotal.toFixed(2);
   };
+  const buildPrintOrder = (data: IExtendedOrder) => {
+    const items = (data.items || []).map((it) => ({
+      quantity: it.quantity,
+      name: String(it.title ?? ''),
+      optionNames: (it.addons || []).flatMap((a) =>
+        (a.options || []).map((o) => String(o.title ?? ''))
+      ),
+      lineTotal: (((it.variation?.price ?? 0) as number) * it.quantity).toFixed(2),
+    }));
+    const rawCreated: unknown = (data as Record<string, unknown>).createdAt;
+    const ms = Number(rawCreated);
+    const createdAt =
+      Number.isFinite(ms) && ms > 0
+        ? new Date(ms).toISOString()
+        : rawCreated
+          ? String(rawCreated)
+          : new Date().toISOString();
+    const user = (data as Record<string, unknown>).user as
+      | { name?: string; phone?: string }
+      | undefined;
+    return {
+      orderNumber: String(data.orderId ?? ''),
+      createdAt,
+      fulfillmentType: (data as Record<string, unknown>).isPickedUp
+        ? 'Pickup'
+        : 'Delivery',
+      paymentMethod: String(data.paymentMethod ?? ''),
+      customerName: user?.name ?? '—',
+      customerPhone: user?.phone ?? '',
+      deliveryAddress: data.deliveryAddress?.deliveryAddress || null,
+      notes: null,
+      items,
+      subtotal: calculateSubtotal(data.items || []),
+      deliveryFee: (data.deliveryCharges ?? 0).toFixed(2),
+      total: String(data.orderAmount ?? calculateSubtotal(data.items || [])),
+    };
+  };
+
+  const handlePrint = async () => {
+    if (!restaurantData) return;
+    setPrinting(true);
+    setPrintStatus('Drucke …');
+    try {
+      const order = buildPrintOrder(restaurantData);
+      for (const template of ['KITCHEN', 'DRIVER'] as const) {
+        const res = await fetch(PRINT_COMPANION_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ template, order }),
+        });
+        if (!res.ok) throw new Error(`${template}: HTTP ${res.status}`);
+      }
+      setPrintStatus('✓ Gedruckt (Küche + Fahrer)');
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setPrintStatus(
+        `✗ Druck fehlgeschlagen (${msg}). Läuft die print-companion App auf diesem Tablet (localhost:9100)?`
+      );
+    } finally {
+      setPrinting(false);
+    }
+  };
+
   if (!restaurantData) return null;
+
+  const printFooter = (
+    <div className="flex items-center justify-between gap-3 p-2">
+      <span className="text-sm text-gray-500 dark:text-gray-300">
+        {printStatus}
+      </span>
+      <button
+        type="button"
+        onClick={handlePrint}
+        disabled={printing}
+        className="px-4 py-2 rounded bg-[#18181B] text-white border border-black hover:bg-white hover:text-black disabled:opacity-50"
+      >
+        {printing ? 'Drucke …' : '🖨 Drucken'}
+      </button>
+    </div>
+  );
 
   return (
     <Dialog
       visible={visible}
       onHide={onHide}
       header={`Order # ${restaurantData.orderId}`}
+      footer={printFooter}
       className="custom-modal border border-dark-600" // Added custom class for CSS override
     >
       <div className="order-details-container dark:bg-dark-900 dark:text-white ">
