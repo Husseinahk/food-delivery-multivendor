@@ -28,6 +28,8 @@ import './global.css';
 // Apollo
 import { useSetupApollo } from '@/lib/hooks/useSetApollo';
 
+import { useEffect, useState } from 'react';
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -35,6 +37,15 @@ export default function RootLayout({
 }>) {
   // Apollo
   const client = useSetupApollo();
+
+  // Upstream Enatega's provider/UI tree (metrics-token security feature +
+  // shared UI chunks) is not SSR-safe — it touches localStorage/document
+  // during render. The Orda deployment ships admin-web via `next start`, so
+  // server-rendering the tree 500s every request. Enatega admin is a CSR SPA:
+  // gate the whole subtree behind a client mount so none of it runs on the
+  // server. One contained guard, upstream-merge-friendly. See orda issue #106.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   // Constants
   const value = {
@@ -47,20 +58,22 @@ export default function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <FontawesomeConfig />
       </head>
-      <body className={'flex flex-col flex-wrap'}>
-        <PrimeReactProvider value={value}>
-          <ApolloProvider client={client}>
-            <ConfigurationProvider>
-              <LayoutProvider>
-                <UserProvider>
-                  <SidebarProvider>
-                    <ToastProvider>{children}</ToastProvider>
-                  </SidebarProvider>
-                </UserProvider>
-              </LayoutProvider>
-            </ConfigurationProvider>
-          </ApolloProvider>
-        </PrimeReactProvider>
+      <body className={'flex flex-col flex-wrap'} suppressHydrationWarning>
+        {mounted && (
+          <PrimeReactProvider value={value}>
+            <ApolloProvider client={client}>
+              <ConfigurationProvider>
+                <LayoutProvider>
+                  <UserProvider>
+                    <SidebarProvider>
+                      <ToastProvider>{children}</ToastProvider>
+                    </SidebarProvider>
+                  </UserProvider>
+                </LayoutProvider>
+              </ConfigurationProvider>
+            </ApolloProvider>
+          </PrimeReactProvider>
+        )}
       </body>
     </html>
   );

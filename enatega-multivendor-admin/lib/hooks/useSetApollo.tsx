@@ -100,7 +100,10 @@ export const useSetupApollo = (): ApolloClient<NormalizedCacheObject> => {
   });
 
   const request = async (operation: Operation): Promise<void> => {
-    const data = localStorage.getItem(`user-${APP_NAME}`);
+    const data =
+      typeof window !== 'undefined'
+        ? localStorage.getItem(`user-${APP_NAME}`)
+        : null;
     const operationName = operation.operationName;
     let token = '';
     if (data) {
