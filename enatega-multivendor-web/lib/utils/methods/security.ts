@@ -8,6 +8,12 @@ const STORAGE_KEYS = {
 const MIN_REFRESH_INTERVAL = 5000; // 5 seconds between refresh attempts
 const EXPIRY_BUFFER = 10000; // Start refreshing 10 seconds before expiry
 
+// This token/nonce scheme is purely client-side, but the Apollo provider that
+// drives it is rendered server-side too (Next.js SSR). `localStorage` does not
+// exist on the server, so every accessor must no-op there — the client re-runs
+// them on hydration. Without this guard SSR throws on every request.
+const isBrowser = typeof window !== 'undefined';
+
 function generateRandomKey(): string {
   const array = new Uint8Array(16);
   crypto.getRandomValues(array);
@@ -15,6 +21,7 @@ function generateRandomKey(): string {
 }
 
 export function initializeNonce(): void {
+  if (!isBrowser) return;
   const existingNonce = localStorage.getItem(STORAGE_KEYS.NONCE);
   if (!existingNonce) {
     const nonce = generateRandomKey();
@@ -23,6 +30,7 @@ export function initializeNonce(): void {
 }
 
 export function getNonce(): string | null {
+  if (!isBrowser) return null;
   const nonce = localStorage.getItem(STORAGE_KEYS.NONCE);
   if (!nonce) {
     initializeNonce();
@@ -32,16 +40,19 @@ export function getNonce(): string | null {
 }
 
 export function storeMetricsToken(token: string, expiry: string): void {
+  if (!isBrowser) return;
   localStorage.setItem(STORAGE_KEYS.METRICS_TOKEN, token);
   localStorage.setItem(STORAGE_KEYS.EXPIRY, expiry);
   localStorage.setItem(STORAGE_KEYS.LAST_REFRESH, Date.now().toString());
 }
 
 export function getMetricsToken(): string | null {
+  if (!isBrowser) return null;
   return localStorage.getItem(STORAGE_KEYS.METRICS_TOKEN);
 }
 
 export function shouldRefreshToken(): boolean {
+  if (!isBrowser) return false;
   const token = localStorage.getItem(STORAGE_KEYS.METRICS_TOKEN);
   const expiryStr = localStorage.getItem(STORAGE_KEYS.EXPIRY);
   const lastRefreshStr = localStorage.getItem(STORAGE_KEYS.LAST_REFRESH);
@@ -66,6 +77,7 @@ export function shouldRefreshToken(): boolean {
 }
 
 export function clearMetricsData(): void {
+  if (!isBrowser) return;
   localStorage.removeItem(STORAGE_KEYS.NONCE);
   localStorage.removeItem(STORAGE_KEYS.METRICS_TOKEN);
   localStorage.removeItem(STORAGE_KEYS.EXPIRY);
