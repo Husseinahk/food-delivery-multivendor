@@ -278,6 +278,12 @@ export default function LiveOrderBoard() {
                         {o.user?.name || '—'}
                         {o.user?.phone ? ` · ${o.user.phone}` : ''}
                       </p>
+                      {!isPickup(o) &&
+                        o.deliveryAddress?.deliveryAddress?.trim() && (
+                          <p className="text-xs text-gray-600">
+                            📍 {o.deliveryAddress.deliveryAddress}
+                          </p>
+                        )}
 
                       <ul className="my-2 space-y-0.5 text-sm text-gray-600">
                         {(o.items ?? []).map((it) => (
