@@ -1,6 +1,12 @@
 {
   "your_email_placeholder": "your@email.com",
   "Delivered": "Delivered",
+  "An error occured while saving the phone number": "An error occurred while saving the phone number",
+  "Error": "Error",
+  "Login": "Log in",
+  "Not Verified": "Not Verified",
+  "Verified": "Verified",
+  "You have logged in successfully": "You have logged in successfully",
   "coupon_removed_different_restaurant": "Coupon removed — it applies to a different restaurant.",
   "coupon_removed_title": "Coupon removed",
   "status_pending": "Your order has been received and is awaiting the restaurant's confirmation.",
