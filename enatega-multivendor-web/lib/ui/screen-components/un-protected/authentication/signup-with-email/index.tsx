@@ -55,8 +55,16 @@ export default function SignUpWithEmail({
 
   // Validation
   const validatePassword = (password: string) => {
-    const strongPasswordRegex =
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/;
+    // Mirror the backend ASP.NET Identity policy EXACTLY (orda
+    // InfrastructureServiceExtensions): min 8, lower + upper + digit,
+    // NonAlphanumeric NOT required. The old regex demanded a special char
+    // AND only accepted 7 specific ones ([@$!%*?&]) inside a closed
+    // character class — so any other special char (#, -, _, …) failed even
+    // though the message says "ein Sonderzeichen", and a backend-valid
+    // password with no special char was wrongly rejected (Orda #168
+    // follow-up). Any character is allowed; only the four classes are
+    // asserted via look-aheads.
+    const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
     return strongPasswordRegex.test(password);
   };
 
