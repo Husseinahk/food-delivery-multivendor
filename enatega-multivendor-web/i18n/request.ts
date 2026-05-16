@@ -24,6 +24,23 @@ function deepMerge(base: any, override: any): any {
   return out;
 }
 
+// next-intl treats "." in a message key as nesting and HARD-THROWS on load
+// ("INVALID_KEY: Namespace keys can not contain the character '.'"). The
+// upstream Enatega en.json ships keys like `your@email.com` and
+// `Select_your_address.` — a single one of them white-screens the whole app
+// (login/registration unreachable). Strip any dotted key at every level so
+// one bad upstream key can never take the site down again.
+function stripDottedKeys(obj: any): any {
+  if (!obj || typeof obj !== "object") return obj;
+  if (Array.isArray(obj)) return obj.map(stripDottedKeys);
+  const out: any = {};
+  for (const k of Object.keys(obj)) {
+    if (k.includes(".")) continue;
+    out[k] = stripDottedKeys(obj[k]);
+  }
+  return out;
+}
+
 export default getRequestConfig(async () => {
   const locale = await getUserLocale();
 
@@ -39,5 +56,5 @@ export default getRequestConfig(async () => {
     }
   }
 
-  return { locale, messages };
+  return { locale, messages: stripDottedKeys(messages) };
 });
