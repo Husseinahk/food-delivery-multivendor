@@ -352,11 +352,21 @@ export default function UserAddressComponent(
   } as const;
 
   const onHandleCreateAddress = () => {
+    // Defensive: `userAddress?.location?.coordinates[N]` throws a TypeError
+    // when location/coordinates is missing (optional chaining does NOT guard
+    // the [0] index), and `${undefined}` would send the literal string
+    // "undefined" → backend rejects it → silent error toast. Orda is
+    // address-text based (no Maps/geocode), so default to [0,0].
+    const coords = userAddress?.location?.coordinates ?? [];
+    const lng = Number.isFinite(Number(coords[0])) ? Number(coords[0]) : 0;
+    const lat = Number.isFinite(Number(coords[1])) ? Number(coords[1]) : 0;
+
     const addressInput = {
       ...(editAddress?._id ? { _id: editAddress?._id } : {}),
-      longitude: `${userAddress?.location?.coordinates[0]}`,
-      latitude: `${userAddress?.location?.coordinates[1]}`,
-      deliveryAddress: userAddress?.deliveryAddress || inputValue?.trim() || "",
+      longitude: `${lng}`,
+      latitude: `${lat}`,
+      deliveryAddress:
+        inputValue?.trim() || userAddress?.deliveryAddress || "",
       // Orda has no cities/zones — "details" stays optional (no undefined).
       details: selectedCity?.label || "",
       label: selectedLocationType,
@@ -652,54 +662,17 @@ export default function UserAddressComponent(
             />
           ) : null}
 
-          <AutoComplete
+          {/* Orda: plain text address — single-restaurant + own drivers, no
+              Google Places (no Maps key → infinite spinner) and no zones.
+              Smart DE PLZ/street suggest is tracked separately. */}
+          <input
             id="google-map"
-            disabled={false}
-            className={`mr-4 h-11 w-full border border-gray-300 px-2 text-sm focus:shadow-none focus:outline-none`}
+            type="text"
+            className={`mr-4 h-11 w-full rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white px-3 text-sm focus:shadow-none focus:outline-none`}
             value={inputValue}
-            completeMethod={(event) => {
-              setSearch(event.query);
-            }}
-            onChange={(e) => {
-              if (typeof e.value === "string") handleInputChange(e.value);
-            }}
-            onSelect={onHandlerAutoCompleteSelectionChange}
-            suggestions={options}
-            forceSelection={false}
-            dropdown={false}
-            multiple={false}
-            loadingIcon={undefined}
+            onChange={(e) => handleInputChange(e.target.value)}
             placeholder={t("enter_full_Address_placeholder")}
-            style={{ width: "100%" }}
-            itemTemplate={(item) => {
-              const matches =
-                item.structured_formatting?.main_text_matched_substrings;
-              let parts: { text: string; highlight: boolean }[] | null = null;
-              if (matches) {
-                parts = parse(
-                  item.structured_formatting.main_text,
-                  matches.map((match: { offset: number; length: number }) => [
-                    match.offset,
-                    match.offset + match.length,
-                  ])
-                );
-              }
-
-              return (
-                <div className="flex flex-col">
-                  <div className="flex items-center">
-                    <FontAwesomeIcon icon={faMapMarker} className="mr-2" />
-                    {parts &&
-                      parts?.map((part, index) => (
-                        <span className="dark:text-white" key={index}>
-                          {part.text}
-                        </span>
-                      ))}
-                  </div>
-                  <small>{item.structured_formatting?.secondary_text}</small>
-                </div>
-              );
-            }}
+            autoComplete="street-address"
           />
         </div>
 
@@ -845,63 +818,15 @@ export default function UserAddressComponent(
             />
           ) : null}
 
-          <AutoComplete
+          {/* Orda: plain text address (see ADD block — no Google Places). */}
+          <input
             id="google-map"
-            disabled={false}
-            className={`mr-4 h-11 w-full border border-gray-300 dark:text-white px-2 text-sm focus:shadow-none focus:outline-none`}
+            type="text"
+            className={`mr-4 h-11 w-full rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white px-3 text-sm focus:shadow-none focus:outline-none`}
             value={inputValue}
-            completeMethod={(event) => {
-              setSearch(event.query);
-            }}
-            onChange={(e) => {
-              if (typeof e.value === "string") handleInputChange(e.value);
-            }}
-            onSelect={onHandlerAutoCompleteSelectionChange}
-            suggestions={options}
-            forceSelection={false}
-            dropdown={false}
-            multiple={false}
-            loadingIcon={undefined}
+            onChange={(e) => handleInputChange(e.target.value)}
             placeholder={t("enter_full_Address_placeholder")}
-            style={{ width: "100%" }}
-            itemTemplate={(item) => {
-              const matches =
-                item.structured_formatting?.main_text_matched_substrings;
-              let parts: { text: string; highlight: boolean }[] | null = null;
-              if (matches) {
-                parts = parse(
-                  item.structured_formatting.main_text,
-                  matches.map((match: { offset: number; length: number }) => [
-                    match.offset,
-                    match.offset + match.length,
-                  ])
-                );
-              }
-
-              return (
-                <div className="flex flex-col">
-                  <div className="flex items-center dark:text-white">
-                    <FontAwesomeIcon icon={faMapMarker} className="mr-2 " />
-                    {parts &&
-                      parts?.map((part, index) => (
-                        <span
-                          className="dark:text-white"
-                          key={index}
-                          style={{
-                            fontWeight: part.highlight ? 700 : 400,
-                            marginRight: "2px",
-                          }}
-                        >
-                          {part.text}
-                        </span>
-                      ))}
-                  </div>
-                  <small className="dark:text-white">
-                    {item.structured_formatting?.secondary_text}
-                  </small>
-                </div>
-              );
-            }}
+            autoComplete="street-address"
           />
         </div>
 
