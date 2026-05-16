@@ -42,60 +42,93 @@ function TrackingStatusCard({ orderTrackingDetails }: TrackingStatusCardProps) {
     }
   };
 
+  // Robust parsing — the backend sends `createdAt` as an epoch-millisecond
+  // STRING ("1778958498883"); `new Date("1778…")` is Invalid Date. Time
+  // stamps (acceptedAt/…) are ISO or null; prep fields are MINUTES (numbers
+  // or numeric strings), never timestamps. Mishandling these produced
+  // "Invalid Date - Invalid Date" on the customer tracking card. (Orda)
+  const toDate = (v: unknown): Date | null => {
+    if (v == null || v === "") return null;
+    if (v instanceof Date) return isNaN(v.getTime()) ? null : v;
+    if (typeof v === "number") {
+      const d = new Date(v);
+      return isNaN(d.getTime()) ? null : d;
+    }
+    const s = String(v).trim();
+    // all-digits → epoch (ms if 13+, else seconds)
+    if (/^\d+$/.test(s)) {
+      const n = Number(s);
+      const d = new Date(s.length <= 10 ? n * 1000 : n);
+      return isNaN(d.getTime()) ? null : d;
+    }
+    const d = new Date(s);
+    return isNaN(d.getTime()) ? null : d;
+  };
+
+  const toMinutes = (v: unknown): number | null => {
+    if (v == null || v === "") return null;
+    const n = Number(v);
+    return Number.isFinite(n) && n > 0 && n < 1000 ? Math.round(n) : null;
+  };
+
   // Get dynamic estimated delivery time
   const getEstimatedDeliveryTime = () => {
     const d = orderTrackingDetails;
-    if (!d?.createdAt) return "20 - 30 min";
 
-    let prep = d.selectedPrepTime || 20;
-    if (!d.selectedPrepTime && d.preparationTime && d.acceptedAt) {
-      const diff =
-        new Date(d.preparationTime).getTime() -
-        new Date(d.acceptedAt).getTime();
-      prep = Math.round(diff / 60000);
-    }
-    const deliveryBuffer = 10; // add extra 10 min for delivery after prep
+    const prep =
+      toMinutes(d?.selectedPrepTime) ??
+      toMinutes(d?.preparationTime) ??
+      toMinutes(d?.expectedTime) ??
+      20;
+    const deliveryBuffer = 10; // delivery leg after the kitchen is done
 
-    const formatTime = (ts: string | number | Date) =>
-      new Date(ts).toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      });
+    const formatTime = (date: Date | null) =>
+      date
+        ? date.toLocaleTimeString("de-DE", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          })
+        : null;
 
-    const getRangeFrom = (base: Date | string | number) => {
+    const rangeMins = `${Math.max(5, prep - 5)} - ${prep + deliveryBuffer} Min.`;
+
+    const getRangeFrom = (base: Date | null) => {
+      if (!base) return rangeMins; // no usable base → relative estimate
       const min = new Date(base);
-      min.setMinutes(min.getMinutes() + Math.max(5, prep - 10));
-
+      min.setMinutes(min.getMinutes() + Math.max(5, prep - 5));
       const max = new Date(base);
       max.setMinutes(max.getMinutes() + prep + deliveryBuffer);
-
-      return `${formatTime(min)} - ${formatTime(max)}`;
+      const fMin = formatTime(min);
+      const fMax = formatTime(max);
+      return fMin && fMax ? `${fMin} - ${fMax}` : rangeMins;
     };
 
-    switch (d.orderStatus) {
+    const created = toDate(d?.createdAt);
+    const accepted = toDate(d?.acceptedAt);
+
+    switch (d?.orderStatus) {
       case "PENDING":
-        return `${Math.max(5, prep - 10)} - ${prep} min`;
+        return rangeMins;
 
       case "ACCEPTED":
-        return getRangeFrom(d.acceptedAt ?? d.createdAt);
+        return getRangeFrom(accepted ?? created);
 
       case "ASSIGNED":
-        if (d.assignedAt) return getRangeFrom(d.assignedAt);
-        return `${Math.max(5, prep - 10)} - ${prep} min`;
+        return getRangeFrom(toDate(d?.assignedAt) ?? accepted ?? created);
 
       case "PICKED":
-        return d.pickedAt ? formatTime(d.pickedAt) : "10 - 15 min";
+        return formatTime(toDate(d?.pickedAt)) ?? "10 - 15 Min.";
 
       case "DELIVERED":
       case "COMPLETED":
-        return d.deliveredAt ? formatTime(d.deliveredAt) : "Delivered";
+        return formatTime(toDate(d?.deliveredAt)) ?? t("Delivered");
 
       case "CANCELLED":
-        return d.cancelledAt ? formatTime(d.cancelledAt) : "Cancelled";
+        return formatTime(toDate(d?.cancelledAt)) ?? t("Cancelled");
 
       default:
-        return "20 - 30 min";
+        return rangeMins;
     }
   };
 
@@ -198,7 +231,7 @@ function TrackingStatusCard({ orderTrackingDetails }: TrackingStatusCardProps) {
       <div className="flex justify-between items-center mb-3">
         <h3 className="text-sm sm:text-base font-semibold dark:text-white">
           {orderTrackingDetails.orderStatus === "DELIVERED"
-            ? "Delivered"
+            ? t("Delivered")
             : t("estimated_Delivery_time")}
         </h3>
 
