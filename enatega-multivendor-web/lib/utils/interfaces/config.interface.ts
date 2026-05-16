@@ -26,5 +26,8 @@ export interface IConfigProps {
   FIREBASE_MEASUREMENT_ID: string ;
   FIREBASE_VAPID_KEY: string ,
 
-  
+  // Orda single-restaurant white-label brand (from `configuration`).
+  RESTAURANT_NAME: string;
+  RESTAURANT_LOGO: string;
+  RESTAURANT_SLUG: string;
 }

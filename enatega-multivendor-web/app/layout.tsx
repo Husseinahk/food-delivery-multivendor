@@ -7,7 +7,9 @@ import { getLocale, getMessages } from "next-intl/server";
 import Script from "next/script";
 
 export const metadata = {
-  title: "Enatega Multivendor",
+  // Neutral SSR fallback — the client sets document.title to the
+  // restaurant's name once `configuration` resolves (Orda white-label).
+  title: "Online bestellen",
   manifest: "/manifest.json",
 };
 

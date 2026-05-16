@@ -30,7 +30,7 @@ import useUser from "@/lib/hooks/useUser";
 import { useSearchUI } from "@/lib/context/search/search.context";
 import useNearByRestaurantsPreview from "@/lib/hooks/useNearByRestaurantsPreview";
 
-import Logo from "@/lib/utils/assets/svg/Logo";
+// Orda white-label: the Enatega <Logo> is replaced by the restaurant brand.
 
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -97,7 +97,8 @@ const AppTopbar = ({ handleModalToggle }: IAppBarProps) => {
   }, []);
   // Hooks
   const router = useRouter();
-  const { GOOGLE_MAPS_KEY, CURRENCY_SYMBOL } = useConfig();
+  const { GOOGLE_MAPS_KEY, CURRENCY_SYMBOL, RESTAURANT_NAME, RESTAURANT_LOGO } =
+    useConfig();
   const {
     cartCount,
     calculateSubtotal,
@@ -387,7 +388,19 @@ const AppTopbar = ({ handleModalToggle }: IAppBarProps) => {
                     onClick={logoClickHandler}
                     className="text-xl font-bold text-gray-900 dark:text-white"
                   >
-                    <Logo fillColor="#000000" darkmode="#FFFFFFFF" />
+                    {/* Orda white-label: the restaurant's own brand, not Enatega. */}
+                    {RESTAURANT_LOGO ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={RESTAURANT_LOGO}
+                        alt={RESTAURANT_NAME || "Logo"}
+                        className="h-9 w-auto max-w-[180px] object-contain"
+                      />
+                    ) : (
+                      <span className="text-xl md:text-2xl font-bold tracking-tight">
+                        {RESTAURANT_NAME || " "}
+                      </span>
+                    )}
                   </div>
                 )}
                 {!isSearchFocused && (

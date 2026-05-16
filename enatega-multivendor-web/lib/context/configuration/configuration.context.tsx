@@ -13,7 +13,7 @@ import { useQuery } from "@apollo/client";
 import { Libraries } from "@react-google-maps/api";
 
 // Core
-import React, { ReactNode, useContext } from "react";
+import React, { ReactNode, useContext, useEffect } from "react";
 
 const ConfigurationContext = React.createContext({} as IConfigProps);
 
@@ -59,6 +59,19 @@ export const ConfigurationProvider = ({
   const FIREBASE_VAPID_KEY = configuration?.vapidKey;
   const FIREBASE_AUTH_DOMAIN = configuration?.authDomain;
 
+  // Orda single-restaurant white-label: the customer-facing brand IS the
+  // restaurant (name/logo from the backend). No Enatega/Orda chrome.
+  const RESTAURANT_NAME = configuration?.restaurantName ?? "";
+  const RESTAURANT_LOGO = configuration?.restaurantLogo ?? "";
+  const RESTAURANT_SLUG = configuration?.restaurantSlug ?? "";
+
+  // Tab title follows the restaurant brand once config resolves.
+  useEffect(() => {
+    if (typeof document !== "undefined" && RESTAURANT_NAME) {
+      document.title = RESTAURANT_NAME;
+    }
+  }, [RESTAURANT_NAME]);
+
   const { SERVER_URL } = getEnv(ENV);
 
   return (
@@ -87,7 +100,10 @@ export const ConfigurationProvider = ({
         FIREBASE_MSG_SENDER_ID,
         FIREBASE_PROJECT_ID,
         FIREBASE_STORAGE_BUCKET,
-        FIREBASE_AUTH_DOMAIN
+        FIREBASE_AUTH_DOMAIN,
+        RESTAURANT_NAME,
+        RESTAURANT_LOGO,
+        RESTAURANT_SLUG
 
       }}
     >
