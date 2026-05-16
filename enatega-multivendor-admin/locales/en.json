@@ -1,6 +1,13 @@
 {
   "Your own delivery drivers": "Your own delivery drivers",
   "Customer note": "Customer note",
+  "Confirmed": "Confirmed",
+  "OutForDelivery": "Out for delivery",
+  "CashOnDelivery": "Cash on delivery",
+  "OnlinePayPal": "PayPal",
+  "CardOnDelivery": "Card on delivery",
+  "STRIPE": "Card (Stripe)",
+  "PAYPAL": "PayPal",
   "Assign driver": "Assign driver",
   "Reassign": "Reassign",
   "Reassign driver": "Reassign driver",

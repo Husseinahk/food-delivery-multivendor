@@ -1,6 +1,13 @@
 {
   "Your own delivery drivers": "Deine eigenen Lieferfahrer",
   "Customer note": "Kundenhinweis",
+  "Confirmed": "Bestätigt",
+  "OutForDelivery": "Unterwegs",
+  "CashOnDelivery": "Barzahlung bei Lieferung",
+  "OnlinePayPal": "PayPal",
+  "CardOnDelivery": "Kartenzahlung bei Lieferung",
+  "STRIPE": "Kartenzahlung (Stripe)",
+  "PAYPAL": "PayPal",
   "Assign driver": "Fahrer zuweisen",
   "Reassign": "Neu zuweisen",
   "Reassign driver": "Fahrer neu zuweisen",
