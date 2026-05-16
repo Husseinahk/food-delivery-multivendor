@@ -15,6 +15,7 @@ import {
 import {
   faArrowLeft,
   faCog,
+  faGaugeHigh,
   faHome,
   faMoneyBillTrendUp,
   faRectangleList,
@@ -65,6 +66,13 @@ export default function MakeSidebar() {
     routeStack.length > 0 ? routeStack[routeStack.length - 1] : null;
 
   const navBarItems: ISidebarMenuItem[] = [
+    {
+      text: t('Live monitor'),
+      route: '/admin/store/board',
+      isParent: true,
+      icon: faGaugeHigh,
+      isClickable: true,
+    },
     {
       text: t('Dashboard'),
       route: '/admin/store/dashboard',

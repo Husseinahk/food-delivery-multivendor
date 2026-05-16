@@ -18,3 +18,14 @@ export const ACCEPT_ORDER_WITH_TIME = gql`
     }
   }
 `;
+
+// Live-Monitor — advance a running order one step (no ETA change).
+// Reuses the same backend updateStatus op (Husseinahk/orda#157).
+export const UPDATE_ORDER_STATUS = gql`
+  mutation UpdateOrderStatusBoard($id: String!, $orderStatus: String!) {
+    updateStatus(id: $id, orderStatus: $orderStatus) {
+      _id
+      orderStatus
+    }
+  }
+`;

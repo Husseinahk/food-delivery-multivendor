@@ -58,6 +58,42 @@ export const GET_ACTIVE_ORDERS = gql`
   }
 `;
 
+// Live-Monitor (Orda) — running, non-terminal orders for the kitchen board.
+// Backend: getActiveOrders(restaurantId) → { totalCount, orders } where the
+// orders are already filtered to non-terminal statuses (Husseinahk/orda#157).
+// The board needs the line items + amounts the dispatch list omits.
+export const GET_BOARD_ORDERS = gql`
+  query GetBoardOrders($restaurantId: ID) {
+    getActiveOrders(restaurantId: $restaurantId) {
+      totalCount
+      orders {
+        _id
+        orderId
+        orderStatus
+        paymentMethod
+        orderAmount
+        createdAt
+        preparationTime
+        expectedTime
+        isPickedUp
+        user {
+          name
+          phone
+        }
+        deliveryAddress {
+          deliveryAddress
+          label
+        }
+        items {
+          _id
+          title
+          quantity
+        }
+      }
+    }
+  }
+`;
+
 export const GET_ORDER_BY_RESTAURANT = gql`
   query ordersByRestId(
     $restaurant: String!
