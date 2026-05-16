@@ -1,6 +1,8 @@
 {
   "your_email_placeholder": "your@email.com",
   "Delivered": "Delivered",
+  "coupon_removed_different_restaurant": "Coupon removed — it applies to a different restaurant.",
+  "coupon_removed_title": "Coupon removed",
   "status_pending": "Your order has been received and is awaiting the restaurant's confirmation.",
   "status_accepted": "Order accepted — the kitchen is preparing it now.",
   "status_accepted_eta": "Order accepted — the kitchen is preparing it. Ready in about {min} min.",
