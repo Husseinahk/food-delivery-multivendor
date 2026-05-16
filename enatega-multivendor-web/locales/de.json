@@ -167,6 +167,11 @@
   "Qty:": "Menge:",
   "SalesTax": "MwSt.",
   "SeeMap": "Karte ansehen",
+  "LoginForSavedAddresses": {
+    "loginPrompt": "Anmelden für gespeicherte Adressen",
+    "viewSavedAddresses": "Gespeicherte Adressen anzeigen",
+    "currentlocation": "Aktueller Standort"
+  },
   "SearchBarPlaceholder": "Suchen",
   "search_in_Enatega_placeholder": "Suchen",
   "app_main_heading": "Willkommen",
