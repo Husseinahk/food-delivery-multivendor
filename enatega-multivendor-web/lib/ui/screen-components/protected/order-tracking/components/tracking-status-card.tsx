@@ -9,37 +9,36 @@ interface TrackingStatusCardProps {
 
 function TrackingStatusCard({ orderTrackingDetails }: TrackingStatusCardProps) {
   const t = useTranslations();
-  // Helper to determine the step status
+  // Orda single-restaurant flow projects the FULL status set
+  // (PENDING→ACCEPTED→PREPARING→READY→PICKED→DELIVERED); ASSIGNED is a
+  // driver-assignment side-event, order.Status is unchanged. The old 5-step
+  // list omitted PREPARING/READY → those statuses fell to index -1 and the
+  // whole progress bar showed empty while the kitchen worked. Map every
+  // status to one of the 5 bars instead. (Orda)
+  const STEP_OF: Record<string, number> = {
+    PENDING: 0,
+    ACCEPTED: 1,
+    PREPARING: 2,
+    READY: 3,
+    ASSIGNED: 3,
+    PICKED: 3,
+    DELIVERED: 4,
+    COMPLETED: 4,
+  };
+
   const getStepStatus = (stepIndex: number) => {
-    const STATUS_ORDER = [
-      "PENDING",
-      "ACCEPTED",
-      "ASSIGNED",
-      "PICKED",
-      "DELIVERED",
-    ];
     const currentStatus = orderTrackingDetails?.orderStatus || "PENDING";
 
-    if (currentStatus === "CANCELLED") {
-      return "inactive";
-    }
+    if (currentStatus === "CANCELLED") return "inactive";
 
-    // Special case: When order is DELIVERED, mark all steps as completed
-    if (currentStatus === "DELIVERED" || currentStatus === "COMPLETED") {
+    if (currentStatus === "DELIVERED" || currentStatus === "COMPLETED")
       return "completed";
-    }
 
-    const currentStatusIndex = STATUS_ORDER.indexOf(currentStatus);
+    const currentStatusIndex = STEP_OF[currentStatus] ?? 0;
 
-    if (currentStatusIndex === -1) return "inactive";
-
-    if (stepIndex < currentStatusIndex) {
-      return "completed"; // Steps before current status
-    } else if (stepIndex === currentStatusIndex) {
-      return "active"; // Current step
-    } else {
-      return "inactive"; // Future steps
-    }
+    if (stepIndex < currentStatusIndex) return "completed";
+    if (stepIndex === currentStatusIndex) return "active";
+    return "inactive";
   };
 
   // Robust parsing — the backend sends `createdAt` as an epoch-millisecond
@@ -164,6 +163,17 @@ function TrackingStatusCard({ orderTrackingDetails }: TrackingStatusCardProps) {
             { min: prep }
           );
         return t(pickup ? "status_accepted_pickup" : "status_accepted");
+
+      case "PREPARING":
+        if (prep)
+          return t(
+            pickup ? "status_preparing_pickup_eta" : "status_preparing_eta",
+            { min: prep }
+          );
+        return t(pickup ? "status_preparing_pickup" : "status_preparing");
+
+      case "READY":
+        return pickup ? t("status_ready_pickup") : t("status_ready");
 
       case "ASSIGNED":
         return pickup ? t("status_ready_pickup") : t("status_assigned");
