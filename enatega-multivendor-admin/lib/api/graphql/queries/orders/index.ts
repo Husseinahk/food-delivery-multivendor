@@ -93,6 +93,7 @@ export const GET_BOARD_ORDERS = gql`
           _id
           title
           quantity
+          specialInstructions
         }
       }
     }

@@ -17,6 +17,7 @@ interface IIntakeItem {
   _id: string;
   title?: string;
   quantity?: number;
+  specialInstructions?: string | null;
 }
 interface IIntakeOrder {
   _id: string;
@@ -195,10 +196,15 @@ export default function LiveOrderIntake() {
           )}
           <ul className="mb-3 divide-y">
             {(current.items ?? []).map((it) => (
-              <li key={it._id} className="flex justify-between py-1.5 text-sm">
+              <li key={it._id} className="py-1.5 text-sm">
                 <span>
                   {it.quantity ?? 1}× {it.title ?? "Artikel"}
                 </span>
+                {it.specialInstructions?.trim() && (
+                  <span className="mt-0.5 block pl-4 text-xs italic text-amber-700">
+                    ↳ {it.specialInstructions}
+                  </span>
+                )}
               </li>
             ))}
           </ul>

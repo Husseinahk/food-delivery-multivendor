@@ -22,6 +22,7 @@ interface IBoardItem {
   _id: string;
   title?: string;
   quantity?: number;
+  specialInstructions?: string | null;
 }
 interface IBoardOrder {
   _id: string;
@@ -281,6 +282,11 @@ export default function LiveOrderBoard() {
                         {(o.items ?? []).map((it) => (
                           <li key={it._id}>
                             {it.quantity ?? 1}× {it.title ?? t('Item')}
+                            {it.specialInstructions?.trim() && (
+                              <span className="block pl-4 text-xs italic text-amber-700">
+                                ↳ {it.specialInstructions}
+                              </span>
+                            )}
                           </li>
                         ))}
                       </ul>
