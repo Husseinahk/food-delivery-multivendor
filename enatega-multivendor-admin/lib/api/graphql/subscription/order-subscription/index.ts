@@ -68,6 +68,7 @@ export const SUBSCRIPTION_PLACE_ORDER = gql`
         status
         paymentStatus
         reason
+        instructions
         isActive
         createdAt
         deliveryCharges

@@ -28,6 +28,7 @@ interface IIntakeOrder {
   items?: IIntakeItem[];
   user?: { name?: string; phone?: string };
   deliveryAddress?: { deliveryAddress?: string };
+  instructions?: string | null;
 }
 
 const ETA_OPTIONS = [15, 20, 30, 45, 60];
@@ -184,6 +185,12 @@ export default function LiveOrderIntake() {
             <div className="mb-3 text-sm">
               <span className="font-medium">Lieferadresse: </span>
               {current.deliveryAddress.deliveryAddress}
+            </div>
+          )}
+          {current.instructions?.trim() && (
+            <div className="mb-3 rounded border-l-4 border-amber-500 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+              <span className="font-semibold">Hinweis des Kunden: </span>
+              {current.instructions}
             </div>
           )}
           <ul className="mb-3 divide-y">

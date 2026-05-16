@@ -36,6 +36,7 @@ interface IBoardOrder {
   user?: { name?: string; phone?: string };
   deliveryAddress?: { deliveryAddress?: string; label?: string };
   rider?: { _id: string; name?: string } | null;
+  instructions?: string | null;
   items?: IBoardItem[];
 }
 interface IRider {
@@ -283,6 +284,15 @@ export default function LiveOrderBoard() {
                           </li>
                         ))}
                       </ul>
+
+                      {o.instructions?.trim() && (
+                        <div className="mb-2 rounded border-l-4 border-amber-400 bg-amber-50 px-2 py-1 text-xs text-amber-800">
+                          <span className="font-semibold">
+                            {t('Customer note')}:{' '}
+                          </span>
+                          {o.instructions}
+                        </div>
+                      )}
 
                       <div className="mb-2 flex items-center justify-between text-sm">
                         <span className="font-semibold text-gray-900">

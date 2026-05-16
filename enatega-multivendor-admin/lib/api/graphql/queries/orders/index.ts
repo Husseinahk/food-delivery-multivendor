@@ -76,6 +76,7 @@ export const GET_BOARD_ORDERS = gql`
         preparationTime
         expectedTime
         isPickedUp
+        instructions
         user {
           name
           phone
