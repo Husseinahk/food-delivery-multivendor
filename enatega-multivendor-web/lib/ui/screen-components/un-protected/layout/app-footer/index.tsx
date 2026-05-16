@@ -21,9 +21,9 @@ const AppFooter = () => {
   const year = new Date().getFullYear();
   const brand = RESTAURANT_NAME || "";
 
-  // German legal link names are fixed German terms (no i18n needed).
-  // Impressum is wired in the legal workstream (#151 / legal scaffold).
+  // German legal links (fixed German terms; content per Husseinahk/orda#155).
   const legalLinks = [
+    { label: "Impressum", href: "/impressum" },
     { label: "Datenschutz", href: "/privacy" },
     { label: "AGB", href: "/terms" },
   ];
