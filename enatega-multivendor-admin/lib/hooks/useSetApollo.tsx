@@ -77,12 +77,31 @@ export const useSetupApollo = (): ApolloClient<NormalizedCacheObject> => {
     uri: `${SERVER_URL}graphql`,
   });
 
-  // WebSocketLink with error handling
+  // WebSocketLink with error handling.
+  // Orda is a single backend: derive the WS URL from SERVER_URL (http→ws)
+  // so subscriptions always reach the same host without a separate env var.
+  // An explicit NEXT_PUBLIC_WS_SERVER_URL still overrides if set.
+  const wsBase =
+    WS_SERVER_URL || (SERVER_URL || "").replace(/^http/, "ws");
   const wsLink = new WebSocketLink(
-    new SubscriptionClient(`${WS_SERVER_URL}graphql`, {
+    new SubscriptionClient(`${wsBase}graphql`, {
       reconnect: true,
       timeout: 30000,
       lazy: true,
+      // Authenticate the WS so [Authorize] subscriptions (live order
+      // intake) work — the backend reads this in WsAuthSocketInterceptor.
+      connectionParams: () => {
+        try {
+          const raw =
+            typeof window !== "undefined"
+              ? localStorage.getItem(`user-${APP_NAME}`)
+              : null;
+          const token = raw ? JSON.parse(raw).token : "";
+          return token ? { authToken: `Bearer ${token}` } : {};
+        } catch {
+          return {};
+        }
+      },
     })
   );
 
