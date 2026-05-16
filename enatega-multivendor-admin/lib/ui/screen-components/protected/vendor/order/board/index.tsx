@@ -11,8 +11,11 @@ import { useCallback, useContext, useMemo } from 'react';
 import { useMutation, useQuery, useSubscription } from '@apollo/client';
 import { useTranslations } from 'next-intl';
 import { RestaurantLayoutContext } from '@/lib/context/restaurant/layout-restaurant.context';
-import { GET_BOARD_ORDERS } from '@/lib/api/graphql';
-import { UPDATE_ORDER_STATUS } from '@/lib/api/graphql/mutations/live-intake';
+import { GET_BOARD_ORDERS, GET_RIDERS } from '@/lib/api/graphql';
+import {
+  UPDATE_ORDER_STATUS,
+  ASSIGN_ORDER_RIDER,
+} from '@/lib/api/graphql/mutations/live-intake';
 import { SUBSCRIPTION_PLACE_ORDER } from '@/lib/api/graphql/subscription/order-subscription';
 
 interface IBoardItem {
@@ -32,7 +35,13 @@ interface IBoardOrder {
   isPickedUp?: boolean;
   user?: { name?: string; phone?: string };
   deliveryAddress?: { deliveryAddress?: string; label?: string };
+  rider?: { _id: string; name?: string } | null;
   items?: IBoardItem[];
+}
+interface IRider {
+  _id: string;
+  name: string;
+  available?: boolean;
 }
 
 // Board lanes, in service order. Terminal states never reach the board
@@ -66,6 +75,18 @@ export default function LiveOrderBoard() {
 
   const [updateStatus, { loading: mutating }] =
     useMutation(UPDATE_ORDER_STATUS);
+  const [assignRider, { loading: assigning }] =
+    useMutation(ASSIGN_ORDER_RIDER);
+
+  // The restaurant's own drivers (for the assign dropdown).
+  const { data: ridersData } = useQuery(GET_RIDERS, {
+    skip: !restaurantId,
+    fetchPolicy: 'cache-and-network',
+  });
+  const riders: IRider[] = useMemo(
+    () => ridersData?.riders ?? [],
+    [ridersData]
+  );
 
   const orders: IBoardOrder[] = useMemo(
     () => data?.getActiveOrders?.orders ?? [],
@@ -99,6 +120,19 @@ export default function LiveOrderBoard() {
       }
     },
     [mutating, updateStatus, refetch]
+  );
+
+  const assign = useCallback(
+    async (order: IBoardOrder, riderId: string) => {
+      if (!riderId || assigning) return;
+      try {
+        await assignRider({ variables: { id: order._id, riderId } });
+        await refetch();
+      } catch {
+        // Non-destructive; staff can retry.
+      }
+    },
+    [assigning, assignRider, refetch]
   );
 
   if (!restaurantId) return null;
@@ -258,6 +292,53 @@ export default function LiveOrderBoard() {
                           {o.paymentMethod || '—'}
                         </span>
                       </div>
+
+                      {/* Own-driver assignment — delivery orders only.
+                          Pickup orders are collected by the customer. */}
+                      {!isPickup(o) && (
+                        <div className="mb-2 text-xs">
+                          {o.rider?._id ? (
+                            <div className="flex items-center justify-between rounded bg-teal-50 px-2 py-1 text-teal-700">
+                              <span>
+                                {t('Driver')}: {o.rider.name || '—'}
+                              </span>
+                              <select
+                                aria-label={t('Reassign driver')}
+                                value=""
+                                disabled={assigning}
+                                onChange={(e) => assign(o, e.target.value)}
+                                className="ml-2 rounded border border-teal-200 bg-white px-1 py-0.5 text-[11px]"
+                              >
+                                <option value="">{t('Reassign')}</option>
+                                {riders.map((r) => (
+                                  <option key={r._id} value={r._id}>
+                                    {r.name}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          ) : (
+                            <select
+                              aria-label={t('Assign driver')}
+                              value=""
+                              disabled={assigning}
+                              onChange={(e) => assign(o, e.target.value)}
+                              className="w-full rounded border border-gray-300 px-2 py-1 text-xs"
+                            >
+                              <option value="">
+                                {riders.length
+                                  ? t('Assign driver')
+                                  : t('No drivers yet')}
+                              </option>
+                              {riders.map((r) => (
+                                <option key={r._id} value={r._id}>
+                                  {r.name}
+                                </option>
+                              ))}
+                            </select>
+                          )}
+                        </div>
+                      )}
 
                       <button
                         type="button"

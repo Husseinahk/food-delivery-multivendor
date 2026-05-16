@@ -29,3 +29,17 @@ export const UPDATE_ORDER_STATUS = gql`
     }
   }
 `;
+
+// Live-Monitor — assign one of the restaurant's own drivers to an order.
+// Backend assignRider(id, riderId) (Husseinahk/orda#181).
+export const ASSIGN_ORDER_RIDER = gql`
+  mutation AssignOrderRider($id: String!, $riderId: String!) {
+    assignRider(id: $id, riderId: $riderId) {
+      _id
+      rider {
+        _id
+        name
+      }
+    }
+  }
+`;

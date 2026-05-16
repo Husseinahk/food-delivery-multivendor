@@ -84,6 +84,10 @@ export const GET_BOARD_ORDERS = gql`
           deliveryAddress
           label
         }
+        rider {
+          _id
+          name
+        }
         items {
           _id
           title
