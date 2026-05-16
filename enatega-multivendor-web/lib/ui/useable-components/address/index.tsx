@@ -380,21 +380,35 @@ export default function UserAddressComponent(
 
   // API Handlers
   function onCompleted({ createAddress, editAddress }) {
-    const address_response: IUserAddress = (
-      createAddress || editAddress
-    )?.addresses.find((a: IUserAddress) => a.selected);
+    const list: IUserAddress[] =
+      (createAddress || editAddress)?.addresses ?? [];
+    // The selected one, else the just-saved one, else the last — never
+    // undefined (a non-selected first address used to crash here on
+    // `.deliveryAddress` of undefined → spurious error toast). (orda#172)
+    const address_response: IUserAddress | undefined =
+      list.find((a: IUserAddress) => a.selected) || list[list.length - 1];
+
+    if (!address_response) {
+      setIndex([0, 0]);
+      onHide();
+      showToast({
+        title: t("Address_Saved_toast_title"),
+        type: "success",
+        message: t("Your_address_has_been_saved_successfully"),
+      });
+      return;
+    }
+
+    const safeCoords: [number, number] = [
+      +(address_response.location?.coordinates?.[0] ?? 0),
+      +(address_response.location?.coordinates?.[1] ?? 0),
+    ];
 
     setUserAddress({
       _id: address_response?._id,
       label: selectedLocationType,
       deliveryAddress: address_response.deliveryAddress,
-
-      location: {
-        coordinates: [
-          +(address_response.location?.coordinates[0] || "0"),
-          +(address_response.location?.coordinates[1] || "0"),
-        ],
-      },
+      location: { coordinates: safeCoords },
     });
     setModifyingId(address_response?._id);
     changeUserSelectedAddress({
@@ -404,13 +418,7 @@ export default function UserAddressComponent(
           _id: address_response?._id,
           label: selectedLocationType,
           deliveryAddress: address_response.deliveryAddress,
-
-          location: {
-            coordinates: [
-              +(address_response.location?.coordinates[0] || "0"),
-              +(address_response.location?.coordinates[1] || "0"),
-            ] as [number, number],
-          },
+          location: { coordinates: safeCoords },
         };
         setUserAddress(new_address);
         onUseLocalStorage("delete", USER_CURRENT_LOCATION_LS_KEY);
