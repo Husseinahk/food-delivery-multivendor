@@ -139,90 +139,58 @@ function TrackingStatusCard({ orderTrackingDetails }: TrackingStatusCardProps) {
 
   const isRestaurant = StoreType.toLowerCase() === "restaurant";
 
+  // Honest, own-system German copy: one restaurant with its OWN drivers —
+  // NEVER claim "a driver was assigned" while the kitchen is still cooking
+  // (that marketplace phrasing was both Uber-Eats-flavoured and false during
+  // ACCEPTED). Driver wording only appears once the order is really ASSIGNED
+  // / PICKED. Pickup vs delivery aware. (Orda)
   const getStatusMessage = () => {
-    const status = orderTrackingDetails?.orderStatus;
-    const now = new Date();
+    const d = orderTrackingDetails;
+    const status = d?.orderStatus;
+    const pickup = !!d?.isPickedUp;
+    const prep =
+      toMinutes(d?.selectedPrepTime) ??
+      toMinutes(d?.preparationTime) ??
+      toMinutes(d?.expectedTime);
 
     switch (status) {
       case "PENDING":
-        return isRestaurant ? t("PendingRestaurant") : t("PendingStore");
+        return t("status_pending");
 
-      case "ACCEPTED": {
-        if (orderTrackingDetails.preparationTime) {
-          const prepTime = new Date(orderTrackingDetails.preparationTime);
-          if (prepTime > now) {
-            const minLeft = Math.ceil(
-              (prepTime.getTime() - now.getTime()) / 60000
-            );
-            const riderMessage = orderTrackingDetails.isPickedUp
-              ? ""
-              : t.raw("Assigned");
-            return isRestaurant
-              ? t("AcceptedRestaurantPrep", { min: minLeft, riderMessage })
-              : t("AcceptedStorePrep", { min: minLeft, riderMessage });
-          }
-        }
-
-        if (orderTrackingDetails.acceptedAt) {
-          const acceptedTime = new Date(orderTrackingDetails.acceptedAt);
-          const timeElapsed = Math.floor(
-            (now.getTime() - acceptedTime.getTime()) / 60000
+      case "ACCEPTED":
+        if (prep)
+          return t(
+            pickup ? "status_accepted_pickup_eta" : "status_accepted_eta",
+            { min: prep }
           );
-          const riderMessage = orderTrackingDetails.isPickedUp
-            ? ""
-            : t.raw("Assigned");
-          return isRestaurant
-            ? timeElapsed <= 0 ? t("AcceptedRestaurantJustnow", { riderMessage }) : t("AcceptedRestaurantElapsed", { min: timeElapsed, riderMessage })
-            : timeElapsed <= 0 ? t("AcceptedStoreJustnow", { riderMessage }) : t("AcceptedStoreElapsed", { min: timeElapsed, riderMessage });
-        }
+        return t(pickup ? "status_accepted_pickup" : "status_accepted");
 
-        const riderMessage = orderTrackingDetails.isPickedUp
-          ? ""
-          : t("Assigned");
-        return isRestaurant
-          ? t("AcceptedRestaurantSimple", { riderMessage })
-          : t("AcceptedStoreSimple", { riderMessage });
-      }
-      case "ASSIGNED": {
-        return t("Assigned");
-      }
-      case "PICKED": {
-        if (orderTrackingDetails.pickedAt) {
-          const pickedTime = new Date(orderTrackingDetails.pickedAt);
-          const timeElapsed = Math.floor(
-            (now.getTime() - pickedTime.getTime()) / 60000
-          );
-          if (timeElapsed <= 0) {
-            return t("PickedElapsedJustNow");
-          } else {
-            return t("PickedElapsed", { min: timeElapsed });
-          }
-        }
-        return t("Picked");
-      }
-      case "DELIVERED": {
-        if (orderTrackingDetails.deliveredAt) {
-          const deliveredTime = new Date(orderTrackingDetails.deliveredAt);
-          const deliveredString = deliveredTime.toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          });
-          return isRestaurant
-            ? t("DeliveredRestaurant", { time: deliveredString })
-            : t("DeliveredStore", { time: deliveredString });
-        }
-        return isRestaurant
-          ? t("DeliveredSimpleRestaurant")
-          : t("DeliveredSimpleStore");
-      }
+      case "ASSIGNED":
+        return pickup ? t("status_ready_pickup") : t("status_assigned");
+
+      case "PICKED":
+        return pickup ? t("status_ready_pickup") : t("status_picked");
+
+      case "DELIVERED":
       case "COMPLETED": {
-        return t("Completed");
+        if (pickup) return t("status_pickup_done");
+        const dt = toDate(d?.deliveredAt);
+        const time = dt
+          ? dt.toLocaleTimeString("de-DE", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          : null;
+        return time
+          ? t("status_delivered", { time })
+          : t("status_delivered_simple");
       }
-      case "CANCELLED": {
-        return orderTrackingDetails.reason || t("Cancelled");
-      }
+
+      case "CANCELLED":
+        return d?.reason || t("status_cancelled");
+
       default:
-        return t("Processing");
+        return t("status_processing");
     }
   };
 
