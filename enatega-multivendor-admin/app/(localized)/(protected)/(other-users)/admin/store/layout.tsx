@@ -5,6 +5,8 @@ import RESTAURANT_GUARD from '@/lib/hoc/RESTAURANT_GUARD';
 import { RestaurantLayoutProvider } from '@/lib/context/restaurant/layout-restaurant.context';
 import RestaurantLayout from '@/lib/ui/layouts/protected/restaurant';
 import { ProfileProvider } from '@/lib/context/restaurant/profile.context';
+// Lieferando-style live order intake (Orda #157) — always-on popup + tone.
+import LiveOrderIntake from '@/lib/ui/useable-components/live-order-intake';
 
 export default function RootLayout({
   children,
@@ -20,7 +22,10 @@ export default function RootLayout({
   return (
     <ProtectedLayout>
       <RestaurantLayoutProvider>
-        <ProfileProvider>{children}</ProfileProvider>
+        <ProfileProvider>
+          {children}
+          <LiveOrderIntake />
+        </ProfileProvider>
       </RestaurantLayoutProvider>
     </ProtectedLayout>
   );
