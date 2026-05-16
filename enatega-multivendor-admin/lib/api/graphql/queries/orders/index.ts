@@ -94,6 +94,11 @@ export const GET_BOARD_ORDERS = gql`
           title
           quantity
           specialInstructions
+          addons {
+            options {
+              title
+            }
+          }
         }
       }
     }

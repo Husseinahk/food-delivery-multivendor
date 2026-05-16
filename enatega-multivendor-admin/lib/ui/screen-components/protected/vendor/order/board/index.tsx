@@ -23,6 +23,7 @@ interface IBoardItem {
   title?: string;
   quantity?: number;
   specialInstructions?: string | null;
+  addons?: { options?: { title?: string }[] }[] | null;
 }
 interface IBoardOrder {
   _id: string;
@@ -282,6 +283,17 @@ export default function LiveOrderBoard() {
                         {(o.items ?? []).map((it) => (
                           <li key={it._id}>
                             {it.quantity ?? 1}× {it.title ?? t('Item')}
+                            {(() => {
+                              const opts = (it.addons ?? [])
+                                .flatMap((a) => a?.options ?? [])
+                                .map((o2) => o2?.title)
+                                .filter(Boolean);
+                              return opts.length ? (
+                                <span className="block pl-4 text-xs text-gray-500">
+                                  {opts.join(', ')}
+                                </span>
+                              ) : null;
+                            })()}
                             {it.specialInstructions?.trim() && (
                               <span className="block pl-4 text-xs italic text-amber-700">
                                 ↳ {it.specialInstructions}
