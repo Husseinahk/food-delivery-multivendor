@@ -208,6 +208,19 @@ export default function UserAddressComponent(
 
   const handleInputChange = (value: string) => {
     setInputValue(value);
+    // Orda is single-restaurant with its own drivers — no cities/zones, and
+    // dev has no Google Maps key, so the Places-select path (the only one
+    // that otherwise set userAddress) never fires. Persist the typed text
+    // directly so a plain address can be saved + ordered with. Keep any
+    // existing coordinates; default to [0,0] (delivery is address-text based).
+    setUserAddress({
+      _id: userAddress?._id || "",
+      deliveryAddress: value,
+      location: {
+        coordinates: userAddress?.location?.coordinates || [0, 0],
+      },
+      label: userAddress?.label || selectedLocationType,
+    });
   };
 
   const onHandlerAutoCompleteSelectionChange = (
@@ -343,8 +356,9 @@ export default function UserAddressComponent(
       ...(editAddress?._id ? { _id: editAddress?._id } : {}),
       longitude: `${userAddress?.location?.coordinates[0]}`,
       latitude: `${userAddress?.location?.coordinates[1]}`,
-      deliveryAddress: userAddress?.deliveryAddress || "",
-      details: selectedCity?.label,
+      deliveryAddress: userAddress?.deliveryAddress || inputValue?.trim() || "",
+      // Orda has no cities/zones — "details" stays optional (no undefined).
+      details: selectedCity?.label || "",
       label: selectedLocationType,
     };
 
@@ -607,35 +621,40 @@ export default function UserAddressComponent(
 
       <div className="w-full flex flex-col items-center gap-y-2">
         <div className="w-full space-y-2">
-          <CustomDropdownComponent
-            name="City"
-            placeholder={t("select_city_placeholder")}
-            selectedItem={selectedCity}
-            setSelectedItem={async (key: string, item: IDropdownSelectItem) => {
-              setSelectedCity(item);
+          {cities_dropdown?.length ? (
+            <CustomDropdownComponent
+              name="City"
+              placeholder={t("select_city_placeholder")}
+              selectedItem={selectedCity}
+              setSelectedItem={async (
+                key: string,
+                item: IDropdownSelectItem
+              ) => {
+                setSelectedCity(item);
 
-              const { coords } = JSON.parse(item.code || "");
+                const { coords } = JSON.parse(item.code || "");
 
-              const { formattedAddress } = await getAddress(
-                coords[1],
-                coords[0]
-              );
+                const { formattedAddress } = await getAddress(
+                  coords[1],
+                  coords[0]
+                );
 
-              setInputValue(formattedAddress);
+                setInputValue(formattedAddress);
 
-              setUserAddress({
-                _id: "",
-                deliveryAddress: formattedAddress,
-                location: { coordinates: [coords[0], coords[1]] },
-                label: t("label_home"),
-              });
-            }}
-            options={cities_dropdown}
-          />
+                setUserAddress({
+                  _id: "",
+                  deliveryAddress: formattedAddress,
+                  location: { coordinates: [coords[0], coords[1]] },
+                  label: t("label_home"),
+                });
+              }}
+              options={cities_dropdown}
+            />
+          ) : null}
 
           <AutoComplete
             id="google-map"
-            disabled={!selectedCity}
+            disabled={false}
             className={`mr-4 h-11 w-full border border-gray-300 px-2 text-sm focus:shadow-none focus:outline-none`}
             value={inputValue}
             completeMethod={(event) => {
@@ -736,8 +755,8 @@ export default function UserAddressComponent(
             <span>{t("cancel_address")}</span>
           </button>
           <button
-            disabled={!isDragged && !selectedCity}
-            className={`w-full h-fit  ${!isDragged && !selectedCity ? "bg-primary-light dark:bg-gray-700" : "bg-primary-color"} text-gray-900 py-2 rounded-full text-base lg:text-[14px]`}
+            disabled={!inputValue?.trim()}
+            className={`w-full h-fit  ${!inputValue?.trim() ? "bg-primary-light dark:bg-gray-700" : "bg-primary-color"} text-gray-900 py-2 rounded-full text-base lg:text-[14px]`}
             onClick={() => onHandleCreateAddress()}
           >
             {modifyingAddressLoading ? (
@@ -795,31 +814,36 @@ export default function UserAddressComponent(
 
       <div className="w-full flex flex-col items-center gap-y-2">
         <div className="w-full space-y-2">
-          <CustomDropdownComponent
-            name={t("City_label")}
-            placeholder={t("select_city_placeholder")}
-            selectedItem={selectedCity}
-            setSelectedItem={async (key: string, item: IDropdownSelectItem) => {
-              setSelectedCity(item);
+          {cities_dropdown?.length ? (
+            <CustomDropdownComponent
+              name={t("City_label")}
+              placeholder={t("select_city_placeholder")}
+              selectedItem={selectedCity}
+              setSelectedItem={async (
+                key: string,
+                item: IDropdownSelectItem
+              ) => {
+                setSelectedCity(item);
 
-              const { coords } = JSON.parse(item.code || "");
+                const { coords } = JSON.parse(item.code || "");
 
-              const { formattedAddress } = await getAddress(
-                coords[1],
-                coords[0]
-              );
+                const { formattedAddress } = await getAddress(
+                  coords[1],
+                  coords[0]
+                );
 
-              setInputValue(formattedAddress);
+                setInputValue(formattedAddress);
 
-              setUserAddress({
-                _id: "",
-                deliveryAddress: formattedAddress,
-                location: { coordinates: [coords[0], coords[1]] },
-                label: t("home"),
-              });
-            }}
-            options={cities_dropdown}
-          />
+                setUserAddress({
+                  _id: "",
+                  deliveryAddress: formattedAddress,
+                  location: { coordinates: [coords[0], coords[1]] },
+                  label: t("home"),
+                });
+              }}
+              options={cities_dropdown}
+            />
+          ) : null}
 
           <AutoComplete
             id="google-map"
