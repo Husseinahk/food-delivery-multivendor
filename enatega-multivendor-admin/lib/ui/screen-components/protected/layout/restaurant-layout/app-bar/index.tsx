@@ -64,7 +64,7 @@ import { onUseLocalStorage } from '@/lib/utils/methods';
 
 // Styles
 import classes from './app-bar.module.css';
-import { AppLogo } from '@/lib/utils/assets/svgs/logo';
+// Orda white-label: Enatega AppLogo replaced by the restaurant's own name.
 import { useQuery } from '@apollo/client';
 import { GET_RESTAURANT_PROFILE } from '@/lib/api/graphql';
 import { useLocale, useTranslations } from 'next-intl';
@@ -190,8 +190,12 @@ const AppTopbar = () => {
             <FontAwesomeIcon icon={faBars} />
           </button>
         </div>
-        <div onClick={() => onRedirectToPage('/admin/store/dashboard')}>
-          <AppLogo />
+        {/* Orda white-label: the restaurant's own name, not the Enatega logo. */}
+        <div
+          onClick={() => onRedirectToPage('/admin/store/dashboard')}
+          className="px-2 text-lg md:text-xl font-bold tracking-tight"
+        >
+          {restaurantName || ''}
         </div>
       </div>
       <div className="hidden items-center space-x-1 md:flex">
