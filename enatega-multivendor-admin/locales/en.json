@@ -1,4 +1,13 @@
 {
+  "Your own delivery drivers": "Your own delivery drivers",
+  "Edit driver": "Edit driver",
+  "Add driver": "Add driver",
+  "New password (leave blank to keep)": "New password (leave blank to keep)",
+  "No drivers yet": "No drivers yet",
+  "Unavailable": "Unavailable",
+  "Remove this driver?": "Remove this driver?",
+  "Name and username are required": "Name and username are required",
+  "A password is required for a new driver": "A password is required for a new driver",
   "Live monitor": "Live monitor",
   "Running orders at a glance": "Running orders at a glance",
   "Preparing": "Preparing",

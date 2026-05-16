@@ -16,6 +16,7 @@ import {
   faArrowLeft,
   faCog,
   faGaugeHigh,
+  faTruck,
   faHome,
   faMoneyBillTrendUp,
   faRectangleList,
@@ -71,6 +72,13 @@ export default function MakeSidebar() {
       route: '/admin/store/board',
       isParent: true,
       icon: faGaugeHigh,
+      isClickable: true,
+    },
+    {
+      text: t('Drivers'),
+      route: '/admin/store/drivers',
+      isParent: true,
+      icon: faTruck,
       isClickable: true,
     },
     {

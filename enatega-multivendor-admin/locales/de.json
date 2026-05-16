@@ -1,4 +1,13 @@
 {
+  "Your own delivery drivers": "Deine eigenen Lieferfahrer",
+  "Edit driver": "Fahrer bearbeiten",
+  "Add driver": "Fahrer hinzufügen",
+  "New password (leave blank to keep)": "Neues Passwort (leer lassen, um es zu behalten)",
+  "No drivers yet": "Noch keine Fahrer angelegt",
+  "Unavailable": "Nicht verfügbar",
+  "Remove this driver?": "Diesen Fahrer entfernen?",
+  "Name and username are required": "Name und Benutzername sind erforderlich",
+  "A password is required for a new driver": "Für einen neuen Fahrer ist ein Passwort erforderlich",
   "Live monitor": "Live-Monitor",
   "Running orders at a glance": "Laufende Bestellungen auf einen Blick",
   "Preparing": "In Zubereitung",
